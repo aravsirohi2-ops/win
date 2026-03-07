@@ -1,0 +1,46 @@
+name: Roblox Studio Dev Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dev:
+    runs-on: windows-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Install Dependencies
+        run: |
+          choco install tailscale -y
+          choco install googlechrome -y
+          choco install vscode -y
+          choco install git -y
+          choco install 7zip -y
+
+      - name: Install Roblox Studio
+        run: |
+          Invoke-WebRequest -Uri "https://setup.rbxcdn.com/RobloxStudioLauncherBeta.exe" -OutFile "RobloxStudio.exe"
+          Start-Process .\RobloxStudio.exe -ArgumentList "/silent" -Wait
+
+      - name: Connect to Tailscale
+        run: |
+          tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Enable Remote Desktop
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+      - name: Create Project Workspace
+        run: |
+          mkdir C:\roblox-projects
+
+      - name: Show Tailscale IP
+        run: |
+          tailscale ip -4
+
+      - name: Keep Runner Alive
+        run: |
+          while ($true) {
+            Start-Sleep -Seconds 300
+          }
