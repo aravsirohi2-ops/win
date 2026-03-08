@@ -1,18 +1,20 @@
-name: Fast Windows RDP
+4"}
+name: Tailscale RDP 12H
 
 on:
   workflow_dispatch:
 
 jobs:
-  rdp:
+
+  rdp1:
     runs-on: windows-latest
     timeout-minutes: 360
 
     steps:
 
-    - name: Enable RDP
+    - name: Enable Remote Desktop
       run: |
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
     - name: Install Tailscale
@@ -21,12 +23,43 @@ jobs:
 
     - name: Connect Tailscale
       run: |
-        tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }}
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }}
 
     - name: Show IP
       run: |
-        tailscale ip -4
+        Write-Host "RUNNER 1 READY"
+        & "C:\Program Files\Tailscale\tailscale.exe" ip -4
 
-    - name: Keep Runner Alive
+    - name: Keep Alive
       run: |
         while ($true) { Start-Sleep 300 }
+
+
+  rdp2:
+    needs: rdp1
+    runs-on: windows-latest
+    timeout-minutes: 360
+
+    steps:
+
+    - name: Enable Remote Desktop
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+    - name: Install Tailscale
+      run: |
+        choco install tailscale -y
+
+    - name: Connect Tailscale
+      run: |
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }}
+
+    - name: Show IP
+      run: |
+        Write-Host "RUNNER 2 READY"
+        & "C:\Program Files\Tailscale\tailscale.exe" ip -4
+
+    - name: Keep Alive
+      run: |
+        while ($true) { Start-Sleep 30
