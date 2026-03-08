@@ -1,4 +1,4 @@
-name: Roblox Studio RDP
+name: Windows RDP with Tailscale
 
 on:
   workflow_dispatch:
@@ -12,15 +12,15 @@ jobs:
 
     - name: Enable Remote Desktop
       run: |
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
     - name: Create RDP User
       run: |
-        $pass = ConvertTo-SecureString "Rdp12345!" -AsPlainText -Force
-        New-LocalUser "rdp" -Password $pass -FullName "RDP User" -Description "RDP User"
-        Add-LocalGroupMember -Group "Administrators" -Member "rdp"
-        Add-LocalGroupMember -Group "Remote Desktop Users" -Member "rdp"
+        $password = ConvertTo-SecureString "StrongPass123!" -AsPlainText -Force
+        New-LocalUser "rdpuser" -Password $password
+        Add-LocalGroupMember -Group "Administrators" -Member "rdpuser"
+        Add-LocalGroupMember -Group "Remote Desktop Users" -Member "rdpuser"
 
     - name: Install Tailscale
       run: |
@@ -41,17 +41,16 @@ jobs:
         Invoke-WebRequest https://setup.rbxcdn.com/RobloxStudioLauncherBeta.exe -OutFile studio.exe
         Start-Process .\studio.exe -Wait
 
-    - name: Show RDP Info
+    - name: Show Login Info
       run: |
         Write-Host ""
-        Write-Host "====== RDP LOGIN ======"
+        Write-Host "======================="
+        Write-Host "RDP READY"
         Write-Host "IP: $env:TS_IP"
-        Write-Host "User: rdp"
-        Write-Host "Password: Rdp12345!"
+        Write-Host "User: rdpuser"
+        Write-Host "Password: StrongPass123!"
         Write-Host "======================="
 
     - name: Keep Runner Alive
       run: |
-        while ($true) {
-          Start-Sleep -Seconds 300
-        }
+        while ($true) { Start-Sleep -Seconds 300 }
