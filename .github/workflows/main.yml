@@ -1,4 +1,4 @@
-name: Windows RDP with Tailscale
+name: Fast Windows RDP
 
 on:
   workflow_dispatch:
@@ -10,47 +10,23 @@ jobs:
 
     steps:
 
-    - name: Enable Remote Desktop
+    - name: Enable RDP
       run: |
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-
-    - name: Create RDP User
-      run: |
-        $password = ConvertTo-SecureString "StrongPass123!" -AsPlainText -Force
-        New-LocalUser "rdpuser" -Password $password
-        Add-LocalGroupMember -Group "Administrators" -Member "rdpuser"
-        Add-LocalGroupMember -Group "Remote Desktop Users" -Member "rdpuser"
 
     - name: Install Tailscale
       run: |
-        Invoke-WebRequest https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile tailscale.exe
-        Start-Process .\tailscale.exe -ArgumentList "/S" -Wait
+        choco install tailscale -y
 
     - name: Connect Tailscale
       run: |
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }}
+        tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }}
 
-    - name: Get Tailscale IP
+    - name: Show IP
       run: |
-        $ip = & "C:\Program Files\Tailscale\tailscale.exe" ip -4
-        echo "TS_IP=$ip" >> $env:GITHUB_ENV
-
-    - name: Install Roblox Studio
-      run: |
-        Invoke-WebRequest https://setup.rbxcdn.com/RobloxStudioLauncherBeta.exe -OutFile studio.exe
-        Start-Process .\studio.exe -Wait
-
-    - name: Show Login Info
-      run: |
-        Write-Host ""
-        Write-Host "======================="
-        Write-Host "RDP READY"
-        Write-Host "IP: $env:TS_IP"
-        Write-Host "User: rdpuser"
-        Write-Host "Password: StrongPass123!"
-        Write-Host "======================="
+        tailscale ip -4
 
     - name: Keep Runner Alive
       run: |
-        while ($true) { Start-Sleep -Seconds 300 }
+        while ($true) { Start-Sleep 300 }
