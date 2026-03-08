@@ -17,9 +17,10 @@ jobs:
 
     - name: Create RDP User
       run: |
-        net user rdp Rdp12345! /add
-        net localgroup administrators rdp /add
-        net localgroup "Remote Desktop Users" rdp /add
+        $pass = ConvertTo-SecureString "Rdp12345!" -AsPlainText -Force
+        New-LocalUser "rdp" -Password $pass -FullName "RDP User" -Description "RDP User"
+        Add-LocalGroupMember -Group "Administrators" -Member "rdp"
+        Add-LocalGroupMember -Group "Remote Desktop Users" -Member "rdp"
 
     - name: Install Tailscale
       run: |
@@ -43,12 +44,11 @@ jobs:
     - name: Show RDP Info
       run: |
         Write-Host ""
-        Write-Host "=========================="
-        Write-Host "RDP LOGIN DETAILS"
+        Write-Host "====== RDP LOGIN ======"
         Write-Host "IP: $env:TS_IP"
         Write-Host "User: rdp"
         Write-Host "Password: Rdp12345!"
-        Write-Host "=========================="
+        Write-Host "======================="
 
     - name: Keep Runner Alive
       run: |
