@@ -1,10 +1,12 @@
-name: Fast Tailscale RDP
+4"}
+name: Tailscale RDP 12H
 
 on:
   workflow_dispatch:
 
 jobs:
-  rdp:
+
+  rdp1:
     runs-on: windows-latest
     timeout-minutes: 360
 
@@ -12,38 +14,70 @@ jobs:
 
     - name: Enable Remote Desktop
       run: |
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-    - name: Create User
+    - name: Create RDP User
       run: |
-        $pass = ConvertTo-SecureString "RdpPass123!" -AsPlainText -Force
-        New-LocalUser "rdp" -Password $pass
-        Add-LocalGroupMember -Group "Administrators" -Member "rdp"
-        Add-LocalGroupMember -Group "Remote Desktop Users" -Member "rdp"
+        $pass = ConvertTo-SecureString "StrongPass123!" -AsPlainText -Force
+        New-LocalUser "rdpuser" -Password $pass
+        Add-LocalGroupMember -Group "Administrators" -Member "rdpuser"
+        Add-LocalGroupMember -Group "Remote Desktop Users" -Member "rdpuser"
 
     - name: Install Tailscale
       run: |
-        Invoke-WebRequest https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile tailscale.exe
-        Start-Process .\tailscale.exe -ArgumentList "/S" -Wait
+        choco install tailscale -y
 
     - name: Connect Tailscale
       run: |
         & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }}
 
-    - name: Show RDP Info
+    - name: Show Login Info
       run: |
-        $ip=& "C:\Program Files\Tailscale\tailscale.exe" ip -4
-        Write-Host ""
-        Write-Host "======================="
-        Write-Host "RDP READY"
-        Write-Host "IP: $ip"
-        Write-Host "User: rdp"
-        Write-Host "Password: RdpPass123!"
-        Write-Host "======================="
+        Write-Host "==== RUNNER 1 READY ===="
+        & "C:\Program Files\Tailscale\tailscale.exe" ip -4
+        Write-Host "User: rdpuser"
+        Write-Host "Password: StrongPass123!"
 
-    - name: Keep Alive
+    - name: Keep Runner Alive
       run: |
-        while ($true) {
-          Start-Sleep 300
-        }
+        while ($true) { Start-Sleep 300 }
+
+
+  rdp2:
+    needs: rdp1
+    runs-on: windows-latest
+    timeout-minutes: 360
+
+    steps:
+
+    - name: Enable Remote Desktop
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+    - name: Create RDP User
+      run: |
+        $pass = ConvertTo-SecureString "StrongPass123!" -AsPlainText -Force
+        New-LocalUser "rdpuser" -Password $pass
+        Add-LocalGroupMember -Group "Administrators" -Member "rdpuser"
+        Add-LocalGroupMember -Group "Remote Desktop Users" -Member "rdpuser"
+
+    - name: Install Tailscale
+      run: |
+        choco install tailscale -y
+
+    - name: Connect Tailscale
+      run: |
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }}
+
+    - name: Show Login Info
+      run: |
+        Write-Host "==== RUNNER 2 READY ===="
+        & "C:\Program Files\Tailscale\tailscale.exe" ip -4
+        Write-Host "User: rdpuser"
+        Write-Host "Password: StrongPass123!"
+
+    - name: Keep Runner Alive
+      run: |
+        while ($true) { Start-Sleep 30
