@@ -17,7 +17,7 @@ jobs:
 
     - name: Create RDP User
       run: |
-        net user rdp 12345 /add
+        net user rdp Rdp12345! /add
         net localgroup administrators rdp /add
         net localgroup "Remote Desktop Users" rdp /add
 
@@ -32,7 +32,7 @@ jobs:
 
     - name: Get Tailscale IP
       run: |
-        $ip=& "C:\Program Files\Tailscale\tailscale.exe" ip -4
+        $ip = & "C:\Program Files\Tailscale\tailscale.exe" ip -4
         echo "TS_IP=$ip" >> $env:GITHUB_ENV
 
     - name: Install Roblox Studio
@@ -43,13 +43,15 @@ jobs:
     - name: Show RDP Info
       run: |
         Write-Host ""
-        Write-Host "========================"
-        Write-Host "RDP LOGIN"
+        Write-Host "=========================="
+        Write-Host "RDP LOGIN DETAILS"
         Write-Host "IP: $env:TS_IP"
-        Write-Host "User: AS"
-        Write-Host "Password: 12345"
-        Write-Host "========================"
+        Write-Host "User: rdp"
+        Write-Host "Password: Rdp12345!"
+        Write-Host "=========================="
 
     - name: Keep Runner Alive
       run: |
-        while ($true) { Start-Sleep -Seconds 300 }
+        while ($true) {
+          Start-Sleep -Seconds 300
+        }
